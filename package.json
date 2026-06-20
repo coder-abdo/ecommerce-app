@@ -1,0 +1,14 @@
+{
+  "name": "ecommerce-app",
+  "version": "1.0.0",
+  "description": "E-Commerce App Root Runner",
+  "scripts": {
+    "install:all": "npm install --prefix frontend",
+    "dev:backend": "cd backend && env $(cat .env | xargs) go run cmd/server/main.go",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently --kill-others-on-fail -n \"backend,frontend\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
