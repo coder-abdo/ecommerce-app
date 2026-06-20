@@ -104,11 +104,16 @@ ecommerce-app/
 - Global listing of all placed orders in the system.
 - Detailed itemization displaying historical unit pricing (locking items at checkout cost even if catalog prices change).
 - Visual status updating mechanism to transition orders between: `Pending` ➡️ `Shipped` ➡️ `Delivered` (or `Cancelled`).
+- Integrated tracking number controllers allowing administrators to assign shipment tracking codes.
 
-### 🛒 Client-Side Shopping Experience
+### 🛒 Client-Side Shopping Experience & Checkout Wizard
 - Interactive catalog browser with search and filter controls.
-- Redux-backed Cart Drawer summarizing counts, listing sub-totals, validating address inputs, and executing checkout routines.
-- Complete purchase tracking via the **My Orders** screen, showing historical unit item costs and a delivery timeline tracker.
+- Redux-backed Cart Drawer featuring a **premium 4-step Checkout Wizard**:
+  - **1. Review**: Itemized quantity updates and subtotal summation.
+  - **2. Shipping**: Recipient contact entries and dynamic shipping rate selection (Standard Delivery, Express Courier, Next-Day Priority).
+  - **3. Payment**: Simulated payment channels including credit card (with real-time glassmorphic virtual card preview), PayPal, Web3 tokens, and Cash on Delivery.
+  - **4. Confirmation**: Invoice summary receipt and mock Transaction ID logs.
+- Complete purchase tracking via the **My Orders** screen, showing delivery timelines, structured address details, tracking codes, payment methods/statuses, and invoice breakdowns.
 
 ---
 

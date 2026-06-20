@@ -10,9 +10,9 @@ export function useAdminOrders({ showToast }: UseAdminOrdersOptions) {
 
   const orders = allOrdersQuery.data || [];
 
-  const handleStatusChange = async (orderId: number, newStatus: string) => {
+  const handleStatusChange = async (orderId: number, newStatus: string, trackingNumber?: string) => {
     try {
-      await updateStatusMutation.mutateAsync({ id: orderId, status: newStatus });
+      await updateStatusMutation.mutateAsync({ id: orderId, status: newStatus, trackingNumber });
       showToast(`Order #${orderId} transitioned to ${newStatus}`, 'success');
     } catch (err: any) {
       showToast(err.message, 'error');

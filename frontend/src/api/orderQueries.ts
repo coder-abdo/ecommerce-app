@@ -22,12 +22,36 @@ export interface Order {
   totalAmount: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   address: string;
+  recipientName: string;
+  recipientPhone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  shippingMethod: string;
+  shippingCost: number;
+  trackingNumber?: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentTransactionId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateOrderInput {
-  address: string;
+  recipientName: string;
+  recipientPhone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  shippingMethod: string;
+  shippingCost: number;
+  paymentMethod: string;
   items: {
     productId: number;
     quantity: number;
@@ -88,12 +112,12 @@ export function useCreateOrderMutation() {
 export function useUpdateOrderStatusMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation<{ message: string; status: string }, Error, { id: number; status: string }>({
-    mutationFn: async ({ id, status }) => {
+  return useMutation<{ message: string; status: string }, Error, { id: number; status: string; trackingNumber?: string }>({
+    mutationFn: async ({ id, status, trackingNumber }) => {
       const response = await fetch(`/api/orders/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, trackingNumber }),
       });
 
       if (!response.ok) {

@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"ecommerce-backend/models"
 
@@ -18,11 +22,30 @@ func NewOrderHandler(db *gorm.DB) *OrderHandler {
 	return &OrderHandler{DB: db}
 }
 
+// Helper to generate transaction IDs
+func generateTxnID() string {
+	bytes := make([]byte, 4)
+	if _, err := rand.Read(bytes); err != nil {
+		return "TXN-DEFAULT"
+	}
+	return "TXN-" + strings.ToUpper(hex.EncodeToString(bytes))
+}
+
 // POST /api/orders (Authenticated)
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	var input struct {
-		Address string `json:"address" binding:"required"`
-		Items   []struct {
+		RecipientName  string  `json:"recipientName" binding:"required"`
+		RecipientPhone string  `json:"recipientPhone" binding:"required"`
+		AddressLine1   string  `json:"addressLine1" binding:"required"`
+		AddressLine2   string  `json:"addressLine2"`
+		City           string  `json:"city" binding:"required"`
+		State          string  `json:"state" binding:"required"`
+		PostalCode     string  `json:"postalCode" binding:"required"`
+		Country        string  `json:"country" binding:"required"`
+		ShippingMethod string  `json:"shippingMethod" binding:"required"`
+		ShippingCost   float64 `json:"shippingCost"`
+		PaymentMethod  string  `json:"paymentMethod" binding:"required"`
+		Items          []struct {
 			ProductID uint `json:"productId" binding:"required"`
 			Quantity  int  `json:"quantity" binding:"required,gt=0"`
 		} `json:"items" binding:"required,min=1"`
@@ -60,11 +83,39 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 			})
 		}
 
+		// Concatenate legacy single Address field for database consistency
+		fullAddress := input.AddressLine1
+		if input.AddressLine2 != "" {
+			fullAddress += ", " + input.AddressLine2
+		}
+		fullAddress += fmt.Sprintf(", %s, %s %s, %s", input.City, input.State, input.PostalCode, input.Country)
+
+		// Set initial payment details
+		paymentStatus := "pending"
+		txnID := ""
+		if input.PaymentMethod == "credit_card" || input.PaymentMethod == "paypal" || input.PaymentMethod == "crypto" {
+			paymentStatus = "paid"
+			txnID = generateTxnID()
+		}
+
 		order := models.Order{
-			UserID:      userID.(uint),
-			TotalAmount: totalAmount,
-			Address:     input.Address,
-			Status:      models.StatusPending,
+			UserID:               userID.(uint),
+			TotalAmount:          totalAmount + input.ShippingCost,
+			Address:              fullAddress,
+			RecipientName:        input.RecipientName,
+			RecipientPhone:       input.RecipientPhone,
+			AddressLine1:         input.AddressLine1,
+			AddressLine2:         input.AddressLine2,
+			City:                 input.City,
+			State:                input.State,
+			PostalCode:           input.PostalCode,
+			Country:              input.Country,
+			ShippingMethod:       input.ShippingMethod,
+			ShippingCost:         input.ShippingCost,
+			PaymentMethod:        input.PaymentMethod,
+			PaymentStatus:        paymentStatus,
+			PaymentTransactionID: txnID,
+			Status:               models.StatusPending,
 		}
 
 		if err := tx.Create(&order).Error; err != nil {
@@ -145,7 +196,8 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	}
 
 	var input struct {
-		Status string `json:"status" binding:"required"`
+		Status         string `json:"status" binding:"required"`
+		TrackingNumber string `json:"trackingNumber"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -168,7 +220,17 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 		return
 	}
 
-	if err := h.DB.Model(&order).Update("status", newStatus).Error; err != nil {
+	updates := map[string]interface{}{
+		"status": newStatus,
+	}
+	if input.TrackingNumber != "" {
+		updates["tracking_number"] = input.TrackingNumber
+	}
+	if newStatus == models.StatusDelivered {
+		updates["payment_status"] = "paid"
+	}
+
+	if err := h.DB.Model(&order).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update order status: " + err.Error()})
 		return
 	}
