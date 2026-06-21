@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store';
 import { useLogoutMutation } from '../api/authQueries';
 import { useProductsQuery, useCategoriesQuery } from '../api/productQueries';
 import { useAllOrdersQuery } from '../api/orderQueries';
+import { useCartQuery, useSyncCartMutation } from '../api/cartQueries';
 
 interface UseDashboardOptions {
   onLogout: () => void;
@@ -10,8 +11,20 @@ interface UseDashboardOptions {
 
 export function useDashboard({ onLogout }: UseDashboardOptions) {
   const user = useAppSelector((state) => state.auth);
-  const cartItems = useAppSelector((state) => state.cart.items);
+  const { items: cartItems, isLoaded: isCartLoaded } = useAppSelector((state) => state.cart);
   const logoutMutation = useLogoutMutation(onLogout);
+
+  // 1. Fetch backend cart when authenticated
+  useCartQuery(user.isAuthenticated);
+
+  // 2. Synchronize cart state to database on modifications
+  const syncCartMutation = useSyncCartMutation();
+
+  useEffect(() => {
+    if (isCartLoaded && user.isAuthenticated) {
+      syncCartMutation.mutate(cartItems);
+    }
+  }, [cartItems, isCartLoaded, user.isAuthenticated]);
 
   const isAdmin = user.role === 'admin';
   const [activeTab, setActiveTab] = useState<string>(isAdmin ? 'overview' : 'shop');

@@ -47,6 +47,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(db, cfg)
 	productHandler := handlers.NewProductHandler(db)
 	orderHandler := handlers.NewOrderHandler(db)
+	cartHandler := handlers.NewCartHandler(db)
 
 	// 6. Define API routes
 	api := r.Group("/api")
@@ -86,6 +87,13 @@ func main() {
 			orders.GET("/my", middleware.AuthMiddleware(), orderHandler.GetMyOrders)
 			orders.GET("/all", middleware.AuthMiddleware(), middleware.RequireRole("admin"), orderHandler.GetAllOrders)
 			orders.PUT("/:id/status", middleware.AuthMiddleware(), middleware.RequireRole("admin"), orderHandler.UpdateOrderStatus)
+		}
+
+		// Cart routes
+		cart := api.Group("/cart")
+		{
+			cart.GET("", middleware.AuthMiddleware(), cartHandler.GetCart)
+			cart.PUT("", middleware.AuthMiddleware(), cartHandler.UpdateCart)
 		}
 	}
 

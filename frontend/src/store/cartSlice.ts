@@ -10,10 +10,12 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
+  isLoaded: boolean;
 }
 
 const initialState: CartState = {
   items: [],
+  isLoaded: false,
 };
 
 const cartSlice = createSlice({
@@ -43,8 +45,16 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.items = [];
     },
+    setCart: (state, action: PayloadAction<CartItem[]>) => {
+      state.items = action.payload;
+      state.isLoaded = true;
+    },
+    resetCart: (state) => {
+      state.items = [];
+      state.isLoaded = false;
+    },
   },
 });
 
-export const { addItem, removeItem, updateQuantity, clearCart } = cartSlice.actions;
+export const { addItem, removeItem, updateQuantity, clearCart, setCart, resetCart } = cartSlice.actions;
 export default cartSlice.reducer;

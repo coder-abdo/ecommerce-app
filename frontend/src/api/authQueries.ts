@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAppDispatch } from '../store';
 import { setCredentials, clearCredentials } from '../store/authSlice';
+import { resetCart } from '../store/cartSlice';
 import { LoginInput, RegisterInput } from '../utils/schemas';
 
 interface UserProfileResponse {
@@ -91,6 +92,7 @@ export function useLogoutMutation(onSuccessCallback?: () => void) {
     },
     onSuccess: () => {
       dispatch(clearCredentials());
+      dispatch(resetCart());
       queryClient.setQueryData(['me'], null);
       if (onSuccessCallback) {
         onSuccessCallback();

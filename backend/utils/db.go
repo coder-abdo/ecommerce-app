@@ -16,7 +16,7 @@ func InitDB(dbPath string) *gorm.DB {
 	}
 
 	// Migrate the schema
-	err = db.AutoMigrate(&models.User{}, &models.Category{}, &models.Product{}, &models.ProductImage{}, &models.Order{}, &models.OrderItem{})
+	err = db.AutoMigrate(&models.User{}, &models.Category{}, &models.Product{}, &models.ProductImage{}, &models.Order{}, &models.OrderItem{}, &models.CartItem{})
 	if err != nil {
 		log.Fatalf("failed to auto migrate database schemas: %v", err)
 	}
